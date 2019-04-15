@@ -35,52 +35,47 @@ class CRNNRecognizer:
         #return model,converter
         
 
-    def crnnRec(self, im, text_recs, use_gpu=True):
+    def crnnRec(self, im, use_gpu=True):
        texts = []
        index = 0
-       for rec in text_recs:
-           pt1 = (rec[0],rec[1])
-           pt2 = (rec[2],rec[3])
-           pt3 = (rec[6],rec[7])
-           pt4 = (rec[4],rec[5])
-           partImg = self.dumpRotateImage(im,degrees(atan2(pt2[1]-pt1[1],pt2[0]-pt1[0])),pt1,pt2,pt3,pt4)
-           #mahotas.imsave('%s.jpg'%index, partImg)
-           
-    
-           image = Image.fromarray(partImg).convert('L')
-           #height,width,channel=partImg.shape[:3]
-           #print(height,width,channel)
-           #print(image.size) 
-    
-           #image = Image.open('./img/t4.jpg').convert('L')
-           scale = image.size[1]*1.0 / 32
-           w = image.size[0] / scale
-           w = int(w)
-           #print(w)
-    
-           transformer = dataset.resizeNormalize((w, 32))
-           image = transformer(image)
-           model = self.cpu_model
-           if use_gpu and torch.cuda.is_available():
-               image = image.cuda()
-               model = self.model
-    
-           image = image.view(1, *image.size())
-           image = Variable(image)
-           model.eval()
-           print(type(model),type(image))
-           preds = model(image)
-           _, preds = preds.max(2)
-           preds = preds.squeeze(0)
-           preds = preds.transpose(1, 0).contiguous().view(-1)
-           preds_size = Variable(torch.IntTensor([preds.size(0)]))
-           raw_pred = self.converter.decode(preds.data, preds_size.data, raw=True)
-           sim_pred = self.converter.decode(preds.data, preds_size.data, raw=False)
-           print('%-20s => %-20s' % (raw_pred, sim_pred))
-           #print(index)
-           #print(sim_pred)
-           index = index + 1
-           texts.append(sim_pred)
+       partImg = im
+       #mahotas.imsave('%s.jpg'%index, partImg)
+
+
+       image = Image.fromarray(partImg).convert('L')
+       #height,width,channel=partImg.shape[:3]
+       #print(height,width,channel)
+       #print(image.size)
+
+       #image = Image.open('./img/t4.jpg').convert('L')
+       scale = image.size[1]*1.0 / 32
+       w = image.size[0] / scale
+       w = int(w)
+       #print(w)
+
+       transformer = dataset.resizeNormalize((w, 32))
+       image = transformer(image)
+       model = self.cpu_model
+       if use_gpu and torch.cuda.is_available():
+           image = image.cuda()
+           model = self.model
+
+       image = image.view(1, *image.size())
+       image = Variable(image)
+       model.eval()
+       print(type(model),type(image))
+       preds = model(image)
+       _, preds = preds.max(2)
+       preds = preds.squeeze(0)
+       preds = preds.transpose(1, 0).contiguous().view(-1)
+       preds_size = Variable(torch.IntTensor([preds.size(0)]))
+       raw_pred = self.converter.decode(preds.data, preds_size.data, raw=True)
+       sim_pred = self.converter.decode(preds.data, preds_size.data, raw=False)
+       print('%-20s => %-20s' % (raw_pred, sim_pred))
+       #print(index)
+       #print(sim_pred)
+       index = index + 1
+       texts.append(sim_pred)
            
        return texts
 
